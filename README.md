@@ -41,6 +41,7 @@ this could take a long time, depending on the size of the queue, how long the jo
 Both functions take a list of options which can be any of the following:
 
 - `work` - A function to call to carry out the work. This must return either `{:ok, result}` or `{:error, err}`. An exception being raising is considered `{:error, err}`.
+- `when_complete` A function to call with the result when the work is completed. This allows you to asyncronously deal with the result, inline with the `cast`.
 - `timeout` - The maximum number of milliseconds the `work` is allowed to take before it is considered to have timed out. This is optional, not passing it will mean no timeout.
 - `on_success` - A function called when `work` returns `{:ok, result}`, with 2 arguments, `attempts` and `result`. Must return either `{:return, result}`, `{:fail, error}` or `{:retry, ms_to_retry_in}`. This is optional, the default is `fn (_, result) -> {:return, result} end`.
 - `on_error` - A function called when `work` returns `{:error, error}` or raises, with 2 arguments, `attempts` and `error`. Must return either `{:return, result}`, `{:fail, error}` or `{:retry, ms_to_retry_in}`. This is optional, the default is `fn (_, error) -> {:fail, error} end`.

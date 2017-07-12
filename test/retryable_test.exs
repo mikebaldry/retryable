@@ -82,8 +82,9 @@ defmodule RetryableTest do
 
 
   test "cast: successful outcome" do
+    me = self()
     id = Retryable.cast(
-      notify: self(),
+      when_complete: fn (id, result) -> send(me, {id, result}) end,
       work: fn -> {:ok, :all_good} end
     )
 
@@ -95,8 +96,9 @@ defmodule RetryableTest do
   end
 
   test "cast: error outcome" do
+    me = self()
     id = Retryable.cast(
-      notify: self(),
+      when_complete: fn (id, result) -> send(me, {id, result}) end,
       work: fn -> {:error, :not_good} end
     )
 
@@ -108,8 +110,9 @@ defmodule RetryableTest do
   end
 
   test "cast: timeout" do
+    me = self()
     id = Retryable.cast(
-      notify: self(),
+      when_complete: fn (id, result) -> send(me, {id, result}) end,
       timeout: 100,
       work: fn -> :timer.sleep(150) end
     )

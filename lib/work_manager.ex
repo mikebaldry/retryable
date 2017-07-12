@@ -11,7 +11,7 @@ defmodule Retryable.WorkManager do
   end
 
   def handle_cast({:enqueue, work}, {name, queue}) do
-    Logger.info "[Retryable][#{work.id}] Work enqueued in #{inspect name}."
+    Logger.debug "[Retryable][#{work.id}] Work enqueued in #{inspect name}."
 
     work = Retryable.Work.enqueued(work)
 

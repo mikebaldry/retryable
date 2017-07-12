@@ -57,7 +57,10 @@ defmodule Retryable do
     Returns the result.
   """
   def call(work = %Retryable.Work{}, pool_name \\ DefaultPool) do
-    id = cast(%{work | notify: self()}, pool_name)
+    me = self()
+    when_complete = fn (id, result) -> send(me, {id, result}) end
+
+    id = cast(%{work | when_complete: when_complete}, pool_name)
 
     receive do
       {^id, result} -> result

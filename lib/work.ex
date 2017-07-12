@@ -10,7 +10,7 @@ defmodule Retryable.Work do
     :on_error,
     :on_timeout,
 
-    :notify,
+    :when_complete,
     :timeout,
 
     :attempts,
@@ -31,7 +31,7 @@ defmodule Retryable.Work do
 
       work: Keyword.fetch!(opts, :work),
 
-      notify: Keyword.get(opts, :notify),
+      when_complete: Keyword.get(opts, :when_complete),
       timeout: Keyword.get(opts, :timeout),
 
       on_success: Keyword.get(opts, :on_success, fn (_, result) -> {:return, result} end),
@@ -139,7 +139,7 @@ defmodule Retryable.Work do
   defp process_result(work, {:return, result}) do
     work = ended(work)
     log(work, "Finished. Queuing for: #{work.started_at - work.enqueued_at}ms Processing for: #{work.ended_at - work.started_at}ms Attempts: #{work.attempts}.")
-    notify(work, {:ok, result})
+    complete_callback(work, {:ok, result})
   end
 
   defp process_result(work, {:retry, time_in_ms}) do
@@ -150,7 +150,7 @@ defmodule Retryable.Work do
 
   defp process_result(work, {:fail, error}) do
     log(work, "Failed, error: #{inspect error}.")
-    notify(work, {:error, error})
+    complete_callback(work, {:error, error})
   end
 
   defp process_result(_work, invalid_response) do
@@ -171,15 +171,15 @@ defmodule Retryable.Work do
   end
 
   defp log(work, message) do
-    Logger.info("[Retryable][#{work.id}] #{message}")
+    Logger.debug("[Retryable][#{work.id}] #{message}")
   end
 
   defp cancel_timer(%Retryable.Work{timer: nil}), do: nil
   defp cancel_timer(%Retryable.Work{timer: timer}), do: Process.cancel_timer(timer)
 
-  defp notify(work, result) do
-    if is_pid(work.notify) do
-      send(work.notify, {work.id, result})
+  defp complete_callback(work, result) do
+    if is_function(work.when_complete) do
+      work.when_complete.(work.id, result)
     end
   end
 end
